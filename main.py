@@ -18,10 +18,10 @@ with open("services.json", "r") as json_file:
 def product_ids_by_user(user):
     connection = sqlite3.connect(db_location)
     cursor = connection.cursor()
-    cursor.execute(f"""SELECT product, service
-                       FROM IsWatching
-                       WHERE user="{user}"
-                    """)
+    cursor.execute("""SELECT product, service
+                      FROM IsWatching
+                      WHERE user=?
+                   """, (user,))
     products = cursor.fetchall()
     connection.close()
     return products
@@ -39,16 +39,16 @@ def add_product(product_id, service, user):
     connection = sqlite3.connect(db_location)
     cursor = connection.cursor()
     price = get_product((product_id, service)).price
-    cursor.execute(f"""INSERT OR IGNORE INTO Products
-                       (productNo, service, targetPrice)
-                       VALUES ("{product_id}", "{service}", "{price}")
-                    """)
-    cursor.execute(f"""INSERT OR IGNORE INTO Users
-                       VALUES ("{user}")
-                    """)
-    cursor.execute(f"""INSERT OR IGNORE INTO isWatching
-                       VALUES ("{user}", "{product_id}", "{service}")
-                    """)
+    cursor.execute("""INSERT OR IGNORE INTO Products
+                      (productNo, service, targetPrice)
+                      VALUES (?, ?, ?)
+                   """, (product_id, service, price))
+    cursor.execute("""INSERT OR IGNORE INTO Users
+                      VALUES (?)
+                   """, (user,))
+    cursor.execute("""INSERT OR IGNORE INTO isWatching
+                      VALUES (?, ?, ?)
+                   """, (user, product_id, service))
     connection.commit()
     connection.close()
 def user_ids():
@@ -67,10 +67,10 @@ def products_of_user(user):
 def target_price(product_id, service):
     connection = sqlite3.connect(db_location)
     cursor = connection.cursor()
-    cursor.execute(f"""SELECT targetPrice
-                       FROM Products
-                       WHERE productNo="{product_id}" AND service="{service}"
-                    """)
+    cursor.execute("""SELECT targetPrice
+                      FROM Products
+                      WHERE productNo=? AND service=?
+                   """, (product_id, service))
     price = cursor.fetchone()
     connection.close()
     if price is None:
@@ -81,10 +81,10 @@ def target_price(product_id, service):
 def change_target_price(product_id, service, new_target):
     connection = sqlite3.connect(db_location)
     cursor = connection.cursor()
-    cursor.execute(f"""UPDATE Products
-                       SET targetPrice={new_target}
-                       WHERE productNo="{product_id}" AND service="{service}"
-                    """)
+    cursor.execute("""UPDATE Products
+                      SET targetPrice=?
+                      WHERE productNo=? AND service=?
+                   """, (new_target, product_id, service))
     connection.commit()
     connection.close()
 
