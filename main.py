@@ -3,6 +3,7 @@
 import telegram
 from product import Product
 import string
+import sqlite3
 import time
 import itertools
 import json
