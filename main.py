@@ -5,7 +5,6 @@ from product import Product
 import string
 import sqlite3
 import time
-import itertools
 import json
 from decimal import Decimal
 
