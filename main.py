@@ -2,7 +2,6 @@
 
 import telegram
 from product import Product
-from db_functions import *
 import string
 import time
 import itertools
