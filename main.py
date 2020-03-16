@@ -88,6 +88,9 @@ def change_target_price(product_id, service, new_target):
     connection.commit()
     connection.close()
 
+def is_digits(input_string):
+    return set(str(input_string)).issubset(string.digits)
+
 while True:
     # Handle new messages
     message = bot.next_message()
@@ -98,12 +101,9 @@ while True:
             url = content.split()[1]
             try:
                 service = [service for service in services.keys() if services[service]["url"] in content][0]
-                is_not_product = lambda x: x != "product"
-                product_id = list(itertools.dropwhile(is_not_product, url.split("/")))[1]
-                if set(product_id).issubset(string.digits):
-                    add_product(product_id, service, chat_id)
-                else:
-                    raise ValueError("Link is invalid or not supported")
+                # Select the longest digits-only part of the url
+                product_id = max([part for part in url.split("/") if is_digits(part)])
+                add_product(product_id, service, chat_id)
                 product = get_product((product_id, service))
                 bot.reply(message, f"[{product}]({product.url})")
             except ZeroDivisionError:

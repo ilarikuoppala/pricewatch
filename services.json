@@ -1,6 +1,13 @@
 {
     "verkkokauppa.com": {
-        "url": "https://www.verkkokauppa.com/fi/product/"
+        "url": "https://www.verkkokauppa.com/fi/product/",
+        "price_container_class": "price-tag-price__euros",
+        "name_container_class": "product-header-title"
+    },
+    "gigantti.fi": {
+        "url": "https://www.gigantti.fi/product/",
+        "price_container_class": "product-price-container",
+        "name_container_class": "product-title"
     }
 }
 

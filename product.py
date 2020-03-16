@@ -1,27 +1,32 @@
 from bs4 import BeautifulSoup
 import requests
 import time
+import json
+import string
+
+with open("services.json", "r") as json_file:
+    services = json.load(json_file)
 
 class Product:
     def __init__(self, id, service):
         self.id = id
         self.service = service
-        if self.service == "verkkokauppa.com":
-            self.url = f"https://www.verkkokauppa.com/fi/product/{self.id}/"
-        else:
-            self.url = None
+        self.url = services[service]["url"] + self.id + "/"
         self.name = None
         self.price = None
-        self.updated = time.time()
+        self.updated = 0
         self.update()
     def update(self):
         request = requests.get(self.url)
         if request.status_code == 200:
             soup = BeautifulSoup(request.text, "html.parser")
-            name_span = soup.find_all(class_="product-header-title")[0]
-            price_span = soup.find_all(class_="price-tag-price__euros")[0]
-            self.name = name_span.text
-            self.price = price_span.text
+            name_span = soup.find(class_=services[self.service]["name_container_class"])
+            price_span = soup.find(class_=services[self.service]["price_container_class"])
+            self.name = name_span.text.strip()
+            price = price_span.text.strip()
+            price = "".join([char for char in price if char in string.digits])
+            self.price = price
+            print(f"Data updated (last time {time.time() - self.updated}s ago) {self}")
             self.updated = time.time()
             return True 
         else:
