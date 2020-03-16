@@ -27,7 +27,7 @@ class Product:
         else:
             return False
     def fresh_data(self):
-        if time.time() - self.updated > 60:
+        if time.time() - self.updated > 60*60:
             self.update()
         return {
             "url": self.url,
