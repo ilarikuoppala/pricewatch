@@ -20,12 +20,22 @@ class Product:
         request = requests.get(self.url)
         if request.status_code == 200:
             soup = BeautifulSoup(request.text, "html.parser")
-            name_span = soup.find(class_=services[self.service]["name_container_class"])
-            price_span = soup.find(class_=services[self.service]["price_container_class"])
-            self.name = name_span.text.strip()
-            price = price_span.text.strip()
+            if "name_container_class" in services[self.service].keys():
+                name_span = soup.find(class_=services[self.service]["name_container_class"])
+            elif "name_container_element" in services[self.service].keys():
+                name_span = soup.find(services[self.service]["name_container_element"])
+            if "price_container_class" in services[self.service].keys():
+                # Select the last element found with the certain class
+                # This makes it work at least for service verkkokauppa.com
+                price_span = soup.find_all(class_=services[self.service]["price_container_class"])[-1]
+                price = price_span.text.strip()
+            elif "price_meta_property" in services[self.service].keys():
+                price_element = soup.find("meta", property=services[self.service]["price_meta_property"])
+                price = price_element["content"].replace(",", ".")
+                price = price.split(".")[0]     # Only considering full euros for now 
             price = "".join([char for char in price if char in string.digits])
             self.price = price
+            self.name = name_span.text.strip()
             print(f"Data updated (last time {time.time() - self.updated}s ago) {self}")
             self.updated = time.time()
             return True 

@@ -1,13 +1,21 @@
 {
     "verkkokauppa.com": {
         "url": "https://www.verkkokauppa.com/fi/product/",
+        "style": "product_no",
         "price_container_class": "price-tag-price__euros",
         "name_container_class": "product-header-title"
     },
     "gigantti.fi": {
         "url": "https://www.gigantti.fi/product/",
+        "style": "product_no",
         "price_container_class": "product-price-container",
         "name_container_class": "product-title"
+    },
+    "power.fi": {
+        "url": "https://www.power.fi/",
+        "style": "url",
+        "price_meta_property": "product:price:amount",
+        "name_container_element": "title"
     }
 }
 

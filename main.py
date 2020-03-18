@@ -7,6 +7,7 @@ import sqlite3
 import time
 import json
 from decimal import Decimal
+import itertools
 
 bot = telegram.TelegramBot()
 db_location = "data.sqlite3"
@@ -83,7 +84,7 @@ def change_target_price(product_id, service, new_target):
     cursor.execute("""UPDATE Products
                       SET targetPrice=?
                       WHERE productNo=? AND service=?
-                   """, (new_target, product_id, service))
+                   """, (str(new_target), str(product_id), str(service)))
     connection.commit()
     connection.close()
 
@@ -100,8 +101,14 @@ while True:
             url = content.split()[1]
             try:
                 service = [service for service in services.keys() if services[service]["url"] in content][0]
-                # Select the longest digits-only part of the url
-                product_id = max([part for part in url.split("/") if is_digits(part)])
+                if services[service]["style"] == "product_no":
+                    # Select the longest digits-only part of the url
+                    product_id = max([part for part in url.split("/") if is_digits(part)])
+                elif services[service]["style"] == "url":
+                    # Select the url after the domain
+                    not_domain = lambda x: service in x
+                    parts = list(itertools.dropwhile(not_domain, url.split("/")))
+                    product_id = "/".join(parts[1:])
                 add_product(product_id, service, chat_id)
                 product = get_product((product_id, service))
                 bot.reply(message, f"[{product}]({product.url})")
@@ -113,7 +120,7 @@ while True:
             target = Decimal(target_price(product.id, product.service))
             current_price = Decimal(product.fresh_data()["price"])
             if current_price != target:
-                difference = target - current_price
+                difference = current_price - target
                 bot.send_message(user, f"Price changed ({difference}€): [{product}]({product.url})")
                 change_target_price(product.id, product.service, current_price)
     time.sleep(0.02)
