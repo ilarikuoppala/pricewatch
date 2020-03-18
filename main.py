@@ -112,7 +112,7 @@ while True:
                 add_product(product_id, service, chat_id)
                 product = get_product((product_id, service))
                 bot.reply(message, f"[{product}]({product.url})")
-            except ZeroDivisionError:
+            except:
                 bot.reply(message, "Something went wrong 🙊")
     # Check for price changes and notify users
     for user in user_ids():
