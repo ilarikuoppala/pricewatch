@@ -129,12 +129,12 @@ while True:
                     product_id = "/".join(parts[1:])
                 add_product(product_id, service, chat_id)
                 product = get_product((product_id, service))
-                bot.reply(message, f"[{product}]({product.url})")
+                bot.reply(message, f"Added {product.markdown()}")
             except:
                 bot.reply(message, "Something went wrong 🙊")
         elif content.startswith("/delete"):
             product_list = products_of_user(chat_id)
-            commands = "\n\n".join([f"Delete [{p}]({p.url})\nby clicking /rem{p.hash}" for p in product_list])
+            commands = "\n\n".join([f"Delete {p.markdown()}\nby clicking /rem{p.hash}" for p in product_list])
             bot.reply(message, commands)
         elif content.startswith("/rem"):
             # Take exactly 40 chars after first four
@@ -142,7 +142,7 @@ while True:
             for product in products_of_user(chat_id):
                 if product.hash == sha1_sum:
                     remove_product(product.id, product.service, chat_id)
-                    bot.reply(message, f"Deleted {product}")
+                    bot.reply(message, f"Deleted {product.markdown()}")
                     break
 
     # Check for price changes and notify users
@@ -152,7 +152,7 @@ while True:
             current_price = Decimal(product.fresh_data()["price"])
             if current_price != target:
                 difference = current_price - target
-                bot.send_message(user, f"Price changed ({difference}€): [{product}]({product.url})")
+                bot.send_message(user, f"Price changed ({difference}€): {product.markdown()}")
                 change_target_price(product.id, product.service, current_price)
     time.sleep(0.02)
 

@@ -54,4 +54,6 @@ class Product:
         }
     def __str__(self):
         return f"{self.name} ({self.price}€)"
+    def markdown(self):
+        return f"[{self}]({self.url})"
 
