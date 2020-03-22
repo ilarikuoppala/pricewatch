@@ -46,11 +46,29 @@ def add_product(product_id, service, user):
     cursor.execute("""INSERT OR IGNORE INTO Users
                       VALUES (?)
                    """, (user,))
-    cursor.execute("""INSERT OR IGNORE INTO isWatching
+    cursor.execute("""INSERT OR IGNORE INTO IsWatching
                       VALUES (?, ?, ?)
                    """, (user, product_id, service))
     connection.commit()
     connection.close()
+
+def remove_product(product_id, service, user):
+    connection = sqlite3.connect(db_location)
+    cursor = connection.cursor()
+    # Remove product from user's watchlist
+    cursor.execute("""DELETE FROM IsWatching
+                      WHERE product=? AND service=? AND user=?
+                   """, (product_id, service, user))
+    # Remove any products that no one is watching
+    cursor.execute("""DELETE FROM Products
+                      WHERE productNo NOT IN (
+                          SELECT product
+                          FROM IsWatching
+                      )
+                   """)
+    connection.commit()
+    connection.close()
+
 def user_ids():
     connection = sqlite3.connect(db_location)
     cursor = connection.cursor()
@@ -114,6 +132,19 @@ while True:
                 bot.reply(message, f"[{product}]({product.url})")
             except:
                 bot.reply(message, "Something went wrong 🙊")
+        elif content.startswith("/delete"):
+            product_list = products_of_user(chat_id)
+            commands = "\n\n".join([f"Delete [{p}]({p.url})\nby clicking /rem{p.hash}" for p in product_list])
+            bot.reply(message, commands)
+        elif content.startswith("/rem"):
+            # Take exactly 40 chars after first four
+            sha1_sum = content[4:44]
+            for product in products_of_user(chat_id):
+                if product.hash == sha1_sum:
+                    remove_product(product.id, product.service, chat_id)
+                    bot.reply(message, f"Deleted {product}")
+                    break
+
     # Check for price changes and notify users
     for user in user_ids():
         for product in products_of_user(user):

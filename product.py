@@ -1,4 +1,5 @@
 from bs4 import BeautifulSoup
+from hashlib import sha1
 import requests
 import time
 import json
@@ -16,6 +17,7 @@ class Product:
         self.price = None
         self.updated = 0
         self.update()
+        self.hash = sha1(str.encode(self.id + self.service)).hexdigest()
     def update(self):
         request = requests.get(self.url)
         if request.status_code == 200:

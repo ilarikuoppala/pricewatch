@@ -25,6 +25,10 @@ Run main.py
 Adding an item to watchlist
     
     /add link_to_product
+Deleting from watchlist
+
+    /delete
+    * click on the right command *
 Please note the services currently supported: [services.json](/services.json).
 
 ## Support for services
