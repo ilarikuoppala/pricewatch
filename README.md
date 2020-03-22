@@ -1,5 +1,5 @@
 # pricewatch
-A simple Telegram bot that will watch for price changes so you don't have to.
+A simple Telegram bot that will watch for price changes so you don't have to. My other motivators for this project are practicing of using database with python and using requests + beautifulsoup for crawling data from websites.
 ## Setup
 Create a virtual environment for python
 
@@ -25,8 +25,8 @@ Run main.py
 Adding an item to watchlist
     
     /add link_to_product
-Please note the service(s) currently supported. They can be found in [services.json](/services.json).
+Please note the services currently supported: [services.json](/services.json).
 
 ## Feature requests and bugs
-Please use issues.
+Please use Github issues.
 
