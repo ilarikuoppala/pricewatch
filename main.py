@@ -1,29 +1,36 @@
 #!/usr/bin/env python3
 
 import telegram
-from product import Product
 import string
 import sqlite3
 import time
-import json
 from decimal import Decimal
+from pprint import pprint
 import itertools
+import datetime
+from productgenerator import parse_product_url
+import productgenerator
 
 bot = telegram.TelegramBot()
 db_location = "data.sqlite3"
 products = {}
-with open("services.json", "r") as json_file:
-    services = json.load(json_file)
 
-def product_ids_by_user(user):
+def execute_sql_statement(sql, arguments=None):
     connection = sqlite3.connect(db_location)
     cursor = connection.cursor()
-    cursor.execute("""SELECT product, service
+    if arguments is not None:
+        cursor.execute(sql, arguments)
+    else:
+        cursor.execute(sql)
+    results = cursor.fetchall()
+    connection.close()
+    return results
+
+def product_ids_by_user(user):
+    products = execute_sql_statement("""SELECT product, service
                       FROM IsWatching
                       WHERE user=?
                    """, (user,))
-    products = cursor.fetchall()
-    connection.close()
     return products
 
 def get_product(key):
@@ -31,26 +38,28 @@ def get_product(key):
     if key in products.keys():
         return products[key]
     else:
-        product = Product(key[0], key[1])
+        product = productgenerator.get_product(key[0], key[1])
         products[key] = product
         return product
 
-def add_product(product_id, service, user):
+def add_product(product, user):
     connection = sqlite3.connect(db_location)
     cursor = connection.cursor()
-    price = get_product((product_id, service)).price
+    product = get_product((product.id, product.service))
+    price = product.price_in_cents
     cursor.execute("""INSERT OR IGNORE INTO Products
                       (productNo, service, targetPrice)
                       VALUES (?, ?, ?)
-                   """, (product_id, service, price))
+                   """, (product.id, product.service, price))
     cursor.execute("""INSERT OR IGNORE INTO Users
                       VALUES (?)
                    """, (user,))
     cursor.execute("""INSERT OR IGNORE INTO IsWatching
                       VALUES (?, ?, ?)
-                   """, (user, product_id, service))
+                   """, (user, product.id, product.service))
     connection.commit()
     connection.close()
+    return product
 
 def remove_product(product_id, service, user):
     connection = sqlite3.connect(db_location)
@@ -70,11 +79,8 @@ def remove_product(product_id, service, user):
     connection.close()
 
 def user_ids():
-    connection = sqlite3.connect(db_location)
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM Users")
-    users = [user[0] for user in cursor.fetchall()]
-    connection.close()
+    data = execute_sql_statement("SELECT * FROM Users")
+    users = [user[0] for user in data]
     return users
 
 def products_of_user(user):
@@ -83,18 +89,24 @@ def products_of_user(user):
     return products
 
 def target_price(product_id, service):
-    connection = sqlite3.connect(db_location)
-    cursor = connection.cursor()
-    cursor.execute("""SELECT targetPrice
+    price = execute_sql_statement("""SELECT targetPrice
                       FROM Products
                       WHERE productNo=? AND service=?
-                   """, (product_id, service))
-    price = cursor.fetchone()
-    connection.close()
+                   """, (product_id, service))[0]
     if price is None:
         return price
     else:
         return price[0]
+
+def store_price(product_id, service, price):
+    connection = sqlite3.connect(db_location)
+    cursor = connection.cursor()
+    cursor.execute("""
+                INSERT INTO Prices
+                VALUES (?, ?, ?, ?)
+            """, (datetime.datetime.now().isoformat(), price, product_id, service))
+    connection.commit()
+    connection.close()
 
 def change_target_price(product_id, service, new_target):
     connection = sqlite3.connect(db_location)
@@ -118,19 +130,12 @@ while True:
         if content.startswith("/add"):
             url = content.split()[1]
             try:
-                service = [service for service in services.keys() if services[service]["url"] in content][0]
-                if services[service]["style"] == "product_no":
-                    # Select the longest digits-only part of the url
-                    product_id = max([part for part in url.split("/") if is_digits(part)])
-                elif services[service]["style"] == "url":
-                    # Select the url after the domain
-                    not_domain = lambda x: service in x
-                    parts = list(itertools.dropwhile(not_domain, url.split("/")))
-                    product_id = "/".join(parts[1:])
-                add_product(product_id, service, chat_id)
-                product = get_product((product_id, service))
+                product = parse_product_url(url)
+                product = add_product(product, chat_id)
+                store_price(product.id, product.service, product.price_in_cents)
                 bot.reply(message, f"Added {product.markdown()}")
-            except:
+            except Exception as e:
+                print(e)
                 bot.reply(message, "Something went wrong 🙊")
         elif content.startswith("/delete"):
             product_list = products_of_user(chat_id)
@@ -153,11 +158,16 @@ while True:
     # Check for price changes and notify users
     for user in user_ids():
         for product in products_of_user(user):
-            target = Decimal(target_price(product.id, product.service))
-            current_price = Decimal(product.fresh_data()["price"])
+            try:
+                pprint(target_price(product.id, product.service))
+                target = Decimal(target_price(product.id, product.service))
+            except (TypeError, ValueError) as e:  # Skip updates if unable to get the price
+                pprint(e)
+            current_price = Decimal(product.fresh_data()["price_in_cents"])
             if current_price != target:
+                store_price(product.id, product.service, current_price)
                 difference = current_price - target
-                bot.send_message(user, f"Price changed ({difference}€): {product.markdown()}")
+                bot.send_message(user, f"Price changed ({difference/100}€): {product.markdown()}")
                 change_target_price(product.id, product.service, current_price)
     time.sleep(0.02)
 

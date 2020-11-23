@@ -6,8 +6,8 @@
         "name_container_class": "product-header-title"
     },
     "gigantti.fi": {
-        "url": "https://www.gigantti.fi/product/",
-        "style": "product_no",
+        "url": "https://www.gigantti.fi/",
+        "style": "url",
         "price_container_class": "product-price-container",
         "name_container_class": "product-title"
     },
@@ -16,6 +16,18 @@
         "style": "url",
         "price_meta_property": "product:price:amount",
         "name_container_element": "title"
+    },
+    "sotka.fi": {
+        "url": "https://www.sotka.fi/",
+        "style": "url",
+        "price_container_class": "hinta",
+        "name_container_element": "title"
+    },
+    "nintendo.co.uk": {
+        "url": "https://www.nintendo.co.uk/",
+        "style": "nintendo"
     }
+
+
 }
 

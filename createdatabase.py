@@ -36,5 +36,13 @@ cursor.execute("""CREATE TABLE IsWatching (
                       FOREIGN KEY (service) REFERENCES Products(service)
                       PRIMARY KEY (user, product, service)
                   )""")
+cursor.execute("""CREATE TABLE Prices (
+            datetime TEXT,
+            price INTEGER,
+            product TEXT,
+            service TEXT,
+            FOREIGN KEY (product) REFERENCES Products(productNo),
+            FOREIGN KEY (service) REFERENCES Products(service)
+        )""")
 print("Database created.")
 
