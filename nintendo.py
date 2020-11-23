@@ -4,6 +4,7 @@ from product import Product
 from pprint import pprint
 
 price_url = "https://api.ec.nintendo.com/v1/price?country=FI&lang=en&ids="
+name_url = "https://ec.nintendo.com/FI/en/titles/"
 
 def get_id_and_name(url):
     id_locator = 'offdeviceNsuID'
@@ -35,15 +36,20 @@ def get_price(game_id):
     return prices.get('discount_price', prices['regular_price'])['raw_value']
 
 def get_name(game_id):
-    name_url = "https://ec.nintendo.com/FI/en/titles/" + game_id
-    game_id, name = get_id_and_name(name_url)
+    game_id, name = get_id_and_name(name_url + game_id)
     return name.strip("'")
 
 class NintendoProduct(Product):
     def fetch_name_and_price(self):
         return get_name(self.id), str(get_price(self.id))
-        #self.price_in_cents = price*100
 
+    @property
+    def url(self):
+        return name_url + self.id
+
+    @url.setter
+    def url(self, url):
+        pass
 
 if __name__ == "__main__":
     url = sys.argv[1]
