@@ -144,6 +144,11 @@ while True:
                     remove_product(product.id, product.service, chat_id)
                     bot.reply(message, f"Deleted {product.markdown()}")
                     break
+        elif content.startswith("/list"):
+            for product in products_of_user(chat_id):
+                bot.reply(message, product.markdown())
+        elif content.startswith("/start") or content.startswith("/help"):
+            bot.reply(message, "Commands:\n /add link_to_product\n /delete\n /list")
 
     # Check for price changes and notify users
     for user in user_ids():
