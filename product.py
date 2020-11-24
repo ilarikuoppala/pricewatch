@@ -30,7 +30,7 @@ class Product:
         raise Exception("Setting of price in euros not supported")
 
     def fetch_name_and_price(self):
-        request = requests.get(self.url)
+        request = requests.get(self.url, timeout=10)
         pprint([self.url, request])
         if request.status_code == 200:
             soup = BeautifulSoup(request.text, "html.parser")
@@ -55,7 +55,11 @@ class Product:
             raise Exception("Response code was not 200")
 
     def update(self):
-        self.name, price = self.fetch_name_and_price()
+        try:
+            self.name, price = self.fetch_name_and_price()
+        except Exception as e:
+            print(e)  # If unable to fetch name and price, log error and return false
+            return False
         euros, cents = price.split('.')
         self.price_in_cents = int(euros)*100+int(cents)
         print(f"Data updated (last time {time.time() - self.updated}s ago) {self}")

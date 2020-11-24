@@ -9,12 +9,16 @@ name_url = "https://ec.nintendo.com/FI/en/titles/"
 def get_id_and_name(url):
     id_locator = 'offdeviceNsuID'
     name_locator = "pn:"
-    text = requests.get(url).text
+    text = requests.get(url, timeout=10).text
+    id_line = None
+    name_line = None
     for line in text.split('\n'):
         if id_locator in line:
             id_line = line
         if name_locator in line:
             name_line = line
+    if not (id_line and name_line):
+        raise Exception("Unable to read id or name")
     print(id_line)
     game_id = id_line.split(":")[1].strip(' ",')
     game_name = name_line.split(":")[1].strip(' ",')
@@ -25,7 +29,7 @@ def get_id(url):
 
 def get_prices_json(game_id_list):
     url = price_url + ",".join(game_id_list)
-    data = requests.get(url).json()
+    data = requests.get(url, timeout=10).json()
     return data
 
 def get_price_json(game_id):
@@ -41,7 +45,11 @@ def get_name(game_id):
 
 class NintendoProduct(Product):
     def fetch_name_and_price(self):
-        return get_name(self.id), str(get_price(self.id))
+        try:
+            return get_name(self.id), str(get_price(self.id))
+        except Exception as e:
+            print(e) ## Log and skip errors
+            return self.name, str(self.price)
 
     @property
     def url(self):

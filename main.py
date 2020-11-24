@@ -159,13 +159,12 @@ while True:
     for user in user_ids():
         for product in products_of_user(user):
             try:
-                pprint(target_price(product.id, product.service))
                 target = Decimal(target_price(product.id, product.service))
             except (TypeError, ValueError) as e:  # Skip updates if unable to get the price
                 pprint(e)
             current_price = Decimal(product.fresh_data()["price_in_cents"])
             if current_price != target:
-                store_price(product.id, product.service, current_price)
+                store_price(product.id, product.service, product.price_in_cents)
                 difference = current_price - target
                 bot.send_message(user, f"Price changed ({difference/100}€): {product.markdown()}")
                 change_target_price(product.id, product.service, current_price)
